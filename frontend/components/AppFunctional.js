@@ -1,78 +1,131 @@
-import React from 'react'
-
+import React, { useState } from "react";
+import axios from "axios";
 // önerilen başlangıç stateleri
-const initialMessage = ''
-const initialEmail = ''
-const initialSteps = 0
-const initialIndex = 4 //  "B" nin bulunduğu indexi
+const initialMessage = "";
+const initialEmail = "";
+const initialSteps = 0;
+const initialIndex = 4; //  "B" nin bulunduğu indexi
 
 export default function AppFunctional(props) {
-  // AŞAĞIDAKİ HELPERLAR SADECE ÖNERİDİR.
-  // Bunları silip kendi mantığınızla sıfırdan geliştirebilirsiniz.
+  const [userKonum, setUserKonum] = useState([2, 2]);
+  const [userMove, setUserMove] = useState(0);
+  const [mesaj, setMesaj] = useState("");
+  const [mail, setMail] = useState("");
 
-  function getXY() {
-    // Koordinatları izlemek için bir state e sahip olmak gerekli değildir.
-    // Bunları hesaplayabilmek için "B" nin hangi indexte olduğunu bilmek yeterlidir.
+  const bPrimeLocation = (userKonum[1] - 1) * 3 + userKonum[0] - 1;
+
+  function moveRight() {
+    if (userKonum[0] < 3) {
+      setUserKonum([userKonum[0] + 1, userKonum[1]]);
+      setUserMove(userMove + 1);
+    } else {
+      setMesaj("sağa gidemezsin");
+    }
   }
 
-  function getXYMesaj() {
-    // Kullanıcı için "Koordinatlar (2, 2)" mesajını izlemek için bir state'in olması gerekli değildir.
-    // Koordinatları almak için yukarıdaki "getXY" helperını ve ardından "getXYMesaj"ı kullanabilirsiniz.
-    // tamamen oluşturulmuş stringi döndürür.
+  function moveLeft() {
+    if (userKonum[0] > 1) {
+      setUserKonum([userKonum[0] - 1, userKonum[1]]);
+      setUserMove(userMove + 1);
+    } else {
+      setMesaj("sola gidemezsin.");
+    }
+  }
+
+  function moveDown() {
+    if (userKonum[1] < 3) {
+      setUserKonum([userKonum[0], userKonum[1] + 1]);
+      setUserMove(userMove + 1);
+    } else {
+      setMesaj("aşağı gidemezsin");
+    }
+  }
+  function moveUp() {
+    if (userKonum[1] > 1) {
+      setUserKonum([userKonum[0], userKonum[1] - 1]);
+      setUserMove(userMove + 1);
+    } else {
+      setMesaj("yukarı gidemezsin");
+    }
   }
 
   function reset() {
-    // Tüm stateleri başlangıç ​​değerlerine sıfırlamak için bu helperı kullanın.
-  }
-
-  function sonrakiIndex(yon) {
-    // Bu helper bir yön ("sol", "yukarı", vb.) alır ve "B" nin bir sonraki indeksinin ne olduğunu hesaplar.
-    // Gridin kenarına ulaşıldığında başka gidecek yer olmadığı için,
-    // şu anki indeksi değiştirmemeli.
-  }
-
-  function ilerle(evt) {
-    // Bu event handler, "B" için yeni bir dizin elde etmek üzere yukarıdaki yardımcıyı kullanabilir,
-    // ve buna göre state i değiştirir.
+    setUserKonum([2, 2]);
+    setUserMove(0);
+    setMesaj("");
+    setMail("");
   }
 
   function onChange(evt) {
-    // inputun değerini güncellemek için bunu kullanabilirsiniz
+    setEmail(evt.target.value);
   }
 
-  function onSubmit(evt) {
-    // payloadu POST etmek için bir submit handlera da ihtiyacınız var.
-  }
+  const userSubmit = (event) => {
+    event.preventDefault();
+
+    const pushla = {
+      x: konum[0],
+      y: konum[1],
+      steps: userMove,
+      email: mail,
+    };
+    console.log(pushla);
+    axios
+      .post("http://localhost:9000/api/result", pushla)
+      .then((res) => {
+        console.log(res.data);
+        reset();
+      })
+      .catch((error) => {
+        console.log("Hata", error);
+      });
+  };
 
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
-        <h3 id="coordinates">Koordinatlar (2, 2)</h3>
-        <h3 id="steps">0 kere ilerlediniz</h3>
+        <h3 id="coordinates">Koordinatlar ({userKonum.join(",")})</h3>
+        <h3 id="steps">{userMove} kere ilerlediniz</h3>
       </div>
       <div id="grid">
-        {
-          [0, 1, 2, 3, 4, 5, 6, 7, 8].map(idx => (
-            <div key={idx} className={`square${idx === 4 ? ' active' : ''}`}>
-              {idx === 4 ? 'B' : null}
-            </div>
-          ))
-        }
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+          <div
+            key={idx}
+            className={`square${idx === bPrimeLocation ? " active" : ""}`}
+          >
+            {idx === bPrimeLocation ? "B" : null}
+          </div>
+        ))}
       </div>
       <div className="info">
-        <h3 id="message"></h3>
+        <h3 id="message">{mesaj}</h3>
       </div>
       <div id="keypad">
-        <button id="left">SOL</button>
-        <button id="up">YUKARI</button>
-        <button id="right">SAĞ</button>
-        <button id="down">AŞAĞI</button>
-        <button id="reset">reset</button>
+        <button id="left" onClick={moveLeft}>
+          SOL
+        </button>
+        <button id="up" onClick={moveUp}>
+          YUKARI
+        </button>
+        <button id="right" onClick={moveRight}>
+          SAĞ
+        </button>
+        <button id="down" onClick={moveDown}>
+          AŞAĞI
+        </button>
+        <button id="reset" onClick={reset}>
+          reset
+        </button>
       </div>
-      <form>
-        <input id="email" type="email" placeholder="email girin"></input>
+      <form onSubmit={userSubmit}>
+        <input
+          id="email"
+          type="email"
+          placeholder="email girin"
+          onChange={onChange}
+        ></input>
         <input id="submit" type="submit"></input>
       </form>
     </div>
-  )
+  );
 }
